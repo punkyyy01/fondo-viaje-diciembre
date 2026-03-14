@@ -365,18 +365,18 @@
   function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
 
   function clp(n) { return '$' + Number(n).toLocaleString('es-CL'); }
-  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
   function addPerson() {
     const nameEl = document.getElementById('i-name');
     const amtEl  = document.getElementById('i-amount');
     const name   = nameEl.value.trim();
-    const amount = parseInt(amtEl.value) || 50000;
+    const amount = Math.round(Number(amtEl.value)) || 50000;
     if (!name) { nameEl.focus(); return; }
 
     const payments = {};
     MONTHS.forEach(m => { payments[m.k] = { paid: false, amount }; });
-    state.people.push({ id: Date.now().toString(), name, base: amount, payments });
+    state.people.push({ id: crypto.randomUUID(), name, base: amount, payments });
     save(); render();
     nameEl.value = '';
     amtEl.value  = '50000';
@@ -418,7 +418,7 @@
 
   function confirmPay() {
     if (!pending) return;
-    const amount = parseInt(document.getElementById('m-amount').value);
+    const amount = Math.round(Number(document.getElementById('m-amount').value));
     if (!amount || amount <= 0) return;
     const person = state.people.find(p => p.id === pending.personId);
     person.payments[pending.monthKey] = { paid: true, amount };
@@ -427,6 +427,8 @@
 
   function render() {
     const wrap = document.getElementById('table-wrap');
+    const now = new Date();
+    const currentMonthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
 
     // Summary
     let collected = 0, expected = 0, pendingCount = 0;
@@ -434,7 +436,7 @@
       MONTHS.forEach(m => {
         expected += p.base;
         if (p.payments[m.k].paid) collected += p.payments[m.k].amount;
-        else pendingCount++;
+        else if (m.k <= currentMonthKey) pendingCount++;
       });
     });
     document.getElementById('s-collected').textContent = clp(collected);
