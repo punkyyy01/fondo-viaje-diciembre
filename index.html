@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fondo Viaje Diciembre</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #18181b;
+      color: #e4e4e7;
+      min-height: 100vh;
+      padding: 32px 16px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    header h1 {
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: #f4f4f5;
+      letter-spacing: -0.5px;
+    }
+    header p {
+      color: #71717a;
+      margin-top: 6px;
+      font-size: 0.88rem;
+    }
+
+    .summary {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 36px;
+    }
+    .summary-card {
+      background: #27272a;
+      border: 1px solid #3f3f46;
+      border-radius: 12px;
+      padding: 16px 28px;
+      text-align: center;
+      min-width: 155px;
+    }
+    .summary-card .label {
+      font-size: 0.72rem;
+      color: #71717a;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      font-weight: 600;
+    }
+    .summary-card .value {
+      font-size: 1.45rem;
+      font-weight: 700;
+      margin-top: 6px;
+      color: #f4f4f5;
+    }
+    .summary-card.green .value { color: #4ade80; }
+    .summary-card.amber .value  { color: #fbbf24; }
+    .summary-card.red .value    { color: #f87171; }
+
+    .add-section {
+      background: #27272a;
+      border: 1px solid #3f3f46;
+      border-radius: 12px;
+      padding: 20px 24px;
+      max-width: 520px;
+      margin: 0 auto 36px;
+    }
+    .add-section h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #d4d4d8;
+      margin-bottom: 14px;
+    }
+    .add-form {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .add-form input {
+      flex: 1;
+      min-width: 120px;
+      background: #3f3f46;
+      border: 1px solid #52525b;
+      border-radius: 8px;
+      padding: 9px 12px;
+      color: #f4f4f5;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .add-form input:focus { border-color: #a78bfa; }
+    .add-form input::placeholder { color: #71717a; }
+
+    .btn {
+      background: #7c3aed;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 18px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.18s;
+      white-space: nowrap;
+    }
+    .btn:hover { background: #6d28d9; }
+    .btn.secondary {
+      background: #3f3f46;
+      color: #d4d4d8;
+    }
+    .btn.secondary:hover { background: #52525b; }
+    .btn.danger {
+      background: transparent;
+      color: #71717a;
+      padding: 3px 8px;
+      font-size: 0.82rem;
+      border: 1px solid #3f3f46;
+      border-radius: 6px;
+    }
+    .btn.danger:hover { color: #f87171; border-color: #f87171; background: #f8717115; }
+
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid #3f3f46;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 740px;
+    }
+
+    thead th {
+      background: #27272a;
+      padding: 11px 14px;
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #71717a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid #3f3f46;
+    }
+    thead th:first-child { text-align: left; padding-left: 18px; }
+
+    tbody tr { border-bottom: 1px solid #3f3f4680; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #27272a50; }
+
+    tbody td {
+      background: transparent;
+      padding: 10px 14px;
+      font-size: 0.88rem;
+      vertical-align: middle;
+    }
+    tbody td:first-child { padding-left: 18px; }
+
+    .person-name {
+      font-weight: 600;
+      color: #f4f4f5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .person-base {
+      font-size: 0.73rem;
+      color: #71717a;
+      margin-top: 2px;
+    }
+
+    .payment-cell { text-align: center; }
+    .pay-btn {
+      border: none;
+      border-radius: 8px;
+      padding: 5px 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      min-width: 72px;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+      line-height: 1.3;
+    }
+    .pay-btn.unpaid {
+      background: #3f3f46;
+      color: #71717a;
+    }
+    .pay-btn.unpaid:hover { background: #52525b; color: #d4d4d8; }
+    .pay-btn.paid {
+      background: #14532d40;
+      color: #4ade80;
+      border: 1px solid #16a34a50;
+    }
+    .pay-btn.paid:hover { background: #7f1d1d30; color: #f87171; border-color: #dc262640; }
+    .pay-btn .amt { font-size: 0.67rem; opacity: 0.85; }
+
+    .person-total {
+      text-align: right;
+      font-weight: 700;
+      color: #4ade80;
+      white-space: nowrap;
+      padding-right: 18px !important;
+    }
+    .person-total .of {
+      font-size: 0.72rem;
+      color: #52525b;
+      font-weight: 400;
+      display: block;
+    }
+
+    tfoot td {
+      background: #27272a;
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #71717a;
+      text-align: center;
+      border-top: 1px solid #3f3f46;
+    }
+    tfoot td:first-child { text-align: left; padding-left: 18px; color: #a1a1aa; }
+    tfoot td:last-child { padding-right: 18px; }
+    tfoot .has-value { color: #4ade80; }
+
+    .empty-state {
+      text-align: center;
+      padding: 56px 16px;
+      color: #52525b;
+      font-size: 0.9rem;
+    }
+
+    /* Modal */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: #000000b0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+      animation: fadeIn 0.15s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+    .modal {
+      background: #27272a;
+      border: 1px solid #52525b;
+      border-radius: 14px;
+      padding: 26px;
+      width: 100%;
+      max-width: 340px;
+      animation: slideUp 0.18s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(12px); opacity:0 } to { transform: translateY(0); opacity:1 } }
+
+    .modal h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #f4f4f5;
+      margin-bottom: 3px;
+    }
+    .modal .sub {
+      font-size: 0.8rem;
+      color: #71717a;
+      margin-bottom: 20px;
+    }
+    .modal label {
+      display: block;
+      font-size: 0.8rem;
+      color: #a1a1aa;
+      margin-bottom: 6px;
+    }
+    .modal input[type="number"] {
+      width: 100%;
+      background: #3f3f46;
+      border: 1px solid #52525b;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #f4f4f5;
+      font-size: 1rem;
+      outline: none;
+      margin-bottom: 20px;
+    }
+    .modal input[type="number"]:focus { border-color: #a78bfa; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+    @media (max-width: 560px) {
+      header h1 { font-size: 1.5rem; }
+      .summary-card { min-width: 130px; padding: 12px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Fondo Viaje Diciembre ✈️</h1>
+  <p>Seguimiento de aportes mensuales · Marzo – Diciembre 2026</p>
+</header>
+
+<div class="summary">
+  <div class="summary-card green">
+    <div class="label">Total Recaudado</div>
+    <div class="value" id="s-collected">$0</div>
+  </div>
+  <div class="summary-card amber">
+    <div class="label">Total Esperado</div>
+    <div class="value" id="s-expected">$0</div>
+  </div>
+  <div class="summary-card red">
+    <div class="label">Pagos Pendientes</div>
+    <div class="value" id="s-pending">0</div>
+  </div>
+</div>
+
+<div class="add-section">
+  <h2>Agregar persona</h2>
+  <div class="add-form">
+    <input type="text" id="i-name" placeholder="Nombre" autocomplete="off" />
+    <input type="number" id="i-amount" placeholder="Monto mensual" value="50000" min="1" />
+    <button class="btn" onclick="addPerson()">Agregar</button>
+  </div>
+</div>
+
+<div class="table-wrapper" id="table-wrap"></div>
+
+<!-- Modal -->
+<div class="overlay" id="modal" style="display:none">
+  <div class="modal">
+    <h3 id="m-title">Registrar pago</h3>
+    <p class="sub" id="m-sub"></p>
+    <label>Monto depositado (CLP)</label>
+    <input type="number" id="m-amount" min="1" />
+    <div class="modal-actions">
+      <button class="btn secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn" onclick="confirmPay()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const MONTHS = [
+    { k:'2026-03', l:'Mar' }, { k:'2026-04', l:'Abr' }, { k:'2026-05', l:'May' },
+    { k:'2026-06', l:'Jun' }, { k:'2026-07', l:'Jul' }, { k:'2026-08', l:'Ago' },
+    { k:'2026-09', l:'Sep' }, { k:'2026-10', l:'Oct' }, { k:'2026-11', l:'Nov' },
+    { k:'2026-12', l:'Dic' },
+  ];
+
+  const KEY = 'viaje-dic-2026';
+  let state = { people: [] };
+  let pending = null;
+
+  function load() {
+    try { state = JSON.parse(localStorage.getItem(KEY)) || { people: [] }; } catch(e) {}
+  }
+  function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+
+  function clp(n) { return '$' + Number(n).toLocaleString('es-CL'); }
+  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function addPerson() {
+    const nameEl = document.getElementById('i-name');
+    const amtEl  = document.getElementById('i-amount');
+    const name   = nameEl.value.trim();
+    const amount = parseInt(amtEl.value) || 50000;
+    if (!name) { nameEl.focus(); return; }
+
+    const payments = {};
+    MONTHS.forEach(m => { payments[m.k] = { paid: false, amount }; });
+    state.people.push({ id: Date.now().toString(), name, base: amount, payments });
+    save(); render();
+    nameEl.value = '';
+    amtEl.value  = '50000';
+    nameEl.focus();
+  }
+
+  function removePerson(id) {
+    const p = state.people.find(x => x.id === id);
+    if (!p || !confirm(`¿Eliminar a ${p.name}?`)) return;
+    state.people = state.people.filter(x => x.id !== id);
+    save(); render();
+  }
+
+  function clickPayment(personId, monthKey) {
+    const person = state.people.find(p => p.id === personId);
+    const pay = person.payments[monthKey];
+    const mLabel = MONTHS.find(m => m.k === monthKey).l;
+
+    if (pay.paid) {
+      if (confirm(`¿Marcar a ${person.name} como NO pagado en ${mLabel}?`)) {
+        pay.paid = false;
+        save(); render();
+      }
+      return;
+    }
+
+    pending = { personId, monthKey };
+    document.getElementById('m-title').textContent = `Registrar pago — ${person.name}`;
+    document.getElementById('m-sub').textContent   = `Mes: ${mLabel} 2026`;
+    document.getElementById('m-amount').value      = pay.amount || person.base;
+    document.getElementById('modal').style.display = 'flex';
+    setTimeout(() => document.getElementById('m-amount').select(), 50);
+  }
+
+  function closeModal() {
+    document.getElementById('modal').style.display = 'none';
+    pending = null;
+  }
+
+  function confirmPay() {
+    if (!pending) return;
+    const amount = parseInt(document.getElementById('m-amount').value);
+    if (!amount || amount <= 0) return;
+    const person = state.people.find(p => p.id === pending.personId);
+    person.payments[pending.monthKey] = { paid: true, amount };
+    save(); closeModal(); render();
+  }
+
+  function render() {
+    const wrap = document.getElementById('table-wrap');
+
+    // Summary
+    let collected = 0, expected = 0, pendingCount = 0;
+    state.people.forEach(p => {
+      MONTHS.forEach(m => {
+        expected += p.base;
+        if (p.payments[m.k].paid) collected += p.payments[m.k].amount;
+        else pendingCount++;
+      });
+    });
+    document.getElementById('s-collected').textContent = clp(collected);
+    document.getElementById('s-expected').textContent  = clp(expected);
+    document.getElementById('s-pending').textContent   = pendingCount;
+
+    if (!state.people.length) {
+      wrap.innerHTML = '<div class="empty-state">No hay personas agregadas aún. ¡Agrega la primera!</div>';
+      return;
+    }
+
+    let h = '<table><thead><tr><th>Persona</th>';
+    MONTHS.forEach(m => { h += `<th>${m.l}</th>`; });
+    h += '<th style="text-align:right;padding-right:18px">Total</th></tr></thead><tbody>';
+
+    state.people.forEach(p => {
+      h += '<tr>';
+      h += `<td>
+        <div class="person-name">
+          <span>${esc(p.name)}</span>
+          <button class="btn danger" onclick="removePerson('${p.id}')">✕</button>
+        </div>
+        <div class="person-base">${clp(p.base)}/mes</div>
+      </td>`;
+
+      let pTotal = 0;
+      MONTHS.forEach(m => {
+        const pay = p.payments[m.k];
+        if (pay.paid) pTotal += pay.amount;
+        const cls  = pay.paid ? 'paid' : 'unpaid';
+        const text = pay.paid
+          ? `✓ Pagado<span class="amt">${clp(pay.amount)}</span>`
+          : 'Pendiente';
+        h += `<td class="payment-cell">
+          <button class="pay-btn ${cls}" onclick="clickPayment('${p.id}','${m.k}')">${text}</button>
+        </td>`;
+      });
+
+      const pExp = p.base * MONTHS.length;
+      h += `<td class="person-total">${clp(pTotal)}<span class="of">de ${clp(pExp)}</span></td>`;
+      h += '</tr>';
+    });
+
+    h += '</tbody><tfoot><tr><td>Total por mes</td>';
+    MONTHS.forEach(m => {
+      let mTotal = 0;
+      state.people.forEach(p => { if (p.payments[m.k].paid) mTotal += p.payments[m.k].amount; });
+      h += `<td class="${mTotal ? 'has-value' : ''}">${mTotal ? clp(mTotal) : '—'}</td>`;
+    });
+    h += `<td class="has-value" style="text-align:right;padding-right:18px">${clp(collected)}</td>`;
+    h += '</tr></tfoot></table>';
+
+    wrap.innerHTML = h;
+  }
+
+  document.addEventListener('keydown', e => {
+    const modal = document.getElementById('modal');
+    if (e.key === 'Escape') { closeModal(); return; }
+    if (e.key === 'Enter') {
+      if (modal.style.display !== 'none') { confirmPay(); return; }
+      const active = document.activeElement;
+      if (active.id === 'i-name' || active.id === 'i-amount') addPerson();
+    }
+  });
+
+  load();
+  render();
+</script>
+</body>
+</html>
