@@ -294,6 +294,60 @@
     .modal input[type="number"]:focus { border-color: #a78bfa; }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
+    .config-btn {
+      display: block;
+      margin: -20px auto 36px;
+      background: transparent;
+      border: 1px solid #3f3f46;
+      border-radius: 8px;
+      color: #71717a;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .config-btn:hover { color: #d4d4d8; border-color: #71717a; }
+
+    .month-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .month-grid label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: #d4d4d8;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #3f3f46;
+      transition: border-color 0.15s;
+    }
+    .month-grid label:has(input:checked) { border-color: #7c3aed; color: #f4f4f5; }
+    .month-grid input[type="checkbox"] { accent-color: #7c3aed; }
+
+    .year-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .year-row label { font-size: 0.8rem; color: #a1a1aa; margin: 0; }
+    .year-row input {
+      width: 90px;
+      background: #3f3f46;
+      border: 1px solid #52525b;
+      border-radius: 8px;
+      padding: 7px 10px;
+      color: #f4f4f5;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .year-row input:focus { border-color: #a78bfa; }
+
     @media (max-width: 560px) {
       header h1 { font-size: 1.5rem; }
       .summary-card { min-width: 130px; padding: 12px 16px; }
@@ -304,7 +358,7 @@
 
 <header>
   <h1>Fondo Viaje Diciembre ✈️</h1>
-  <p>Seguimiento de aportes mensuales · Marzo – Diciembre 2026</p>
+  <p id="header-sub">Seguimiento de aportes mensuales</p>
 </header>
 
 <div class="summary">
@@ -322,6 +376,8 @@
   </div>
 </div>
 
+<button class="config-btn" onclick="openConfig()">⚙ Configurar meses</button>
+
 <div class="add-section">
   <h2>Agregar persona</h2>
   <div class="add-form">
@@ -332,6 +388,23 @@
 </div>
 
 <div class="table-wrapper" id="table-wrap"></div>
+
+<!-- Config Modal -->
+<div class="overlay" id="config-modal" style="display:none">
+  <div class="modal" style="max-width:380px">
+    <h3>Configurar meses</h3>
+    <p class="sub">Selecciona el año y los meses activos</p>
+    <div class="year-row">
+      <label>Año</label>
+      <input type="number" id="cfg-year" min="2020" max="2035" />
+    </div>
+    <div class="month-grid" id="cfg-months"></div>
+    <div class="modal-actions">
+      <button class="btn secondary" onclick="closeConfig()">Cancelar</button>
+      <button class="btn" onclick="saveConfig()">Guardar</button>
+    </div>
+  </div>
+</div>
 
 <!-- Modal -->
 <div class="overlay" id="modal" style="display:none">
@@ -348,19 +421,29 @@
 </div>
 
 <script>
-  const MONTHS = [
-    { k:'2026-03', l:'Mar' }, { k:'2026-04', l:'Abr' }, { k:'2026-05', l:'May' },
-    { k:'2026-06', l:'Jun' }, { k:'2026-07', l:'Jul' }, { k:'2026-08', l:'Ago' },
-    { k:'2026-09', l:'Sep' }, { k:'2026-10', l:'Oct' }, { k:'2026-11', l:'Nov' },
-    { k:'2026-12', l:'Dic' },
-  ];
+  const MES_LABELS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const DEFAULT_CFG = { year: 2026, active: [3,4,5,6,7,8,9,10,11,12] };
+
+  function getMonths(cfg) {
+    const c = cfg || state.monthsConfig || DEFAULT_CFG;
+    return c.active.slice().sort((a,b)=>a-b).map(m => ({
+      k: `${c.year}-${String(m).padStart(2,'0')}`,
+      l: MES_LABELS[m-1]
+    }));
+  }
 
   const KEY = 'viaje-dic-2026';
-  let state = { people: [] };
+  let state = { people: [], monthsConfig: { ...DEFAULT_CFG } };
   let pending = null;
 
   function load() {
-    try { state = JSON.parse(localStorage.getItem(KEY)) || { people: [] }; } catch(e) {}
+    try {
+      const saved = JSON.parse(localStorage.getItem(KEY));
+      if (saved) {
+        state = saved;
+        if (!state.monthsConfig) state.monthsConfig = { ...DEFAULT_CFG };
+      }
+    } catch(e) {}
   }
   function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
 
@@ -375,7 +458,7 @@
     if (!name) { nameEl.focus(); return; }
 
     const payments = {};
-    MONTHS.forEach(m => { payments[m.k] = { paid: false, amount }; });
+    getMonths().forEach(m => { payments[m.k] = { paid: false, amount }; });
     state.people.push({ id: crypto.randomUUID(), name, base: amount, payments });
     save(); render();
     nameEl.value = '';
@@ -393,7 +476,7 @@
   function clickPayment(personId, monthKey) {
     const person = state.people.find(p => p.id === personId);
     const pay = person.payments[monthKey];
-    const mLabel = MONTHS.find(m => m.k === monthKey).l;
+    const mLabel = getMonths().find(m => m.k === monthKey).l;
 
     if (pay.paid) {
       if (confirm(`¿Marcar a ${person.name} como NO pagado en ${mLabel}?`)) {
@@ -425,17 +508,57 @@
     save(); closeModal(); render();
   }
 
+  function openConfig() {
+    const cfg = state.monthsConfig;
+    document.getElementById('cfg-year').value = cfg.year;
+    const grid = document.getElementById('cfg-months');
+    grid.innerHTML = MES_LABELS.map((l, i) => {
+      const m = i + 1;
+      const checked = cfg.active.includes(m) ? 'checked' : '';
+      return `<label><input type="checkbox" value="${m}" ${checked}>${l}</label>`;
+    }).join('');
+    document.getElementById('config-modal').style.display = 'flex';
+  }
+
+  function closeConfig() {
+    document.getElementById('config-modal').style.display = 'none';
+  }
+
+  function saveConfig() {
+    const year = parseInt(document.getElementById('cfg-year').value, 10);
+    const active = [...document.querySelectorAll('#cfg-months input:checked')].map(el => parseInt(el.value, 10));
+    if (!active.length) { alert('Selecciona al menos un mes.'); return; }
+
+    state.monthsConfig = { year, active };
+    // Ensure every person has entries for all active months
+    const months = getMonths();
+    state.people.forEach(p => {
+      months.forEach(m => {
+        if (!p.payments[m.k]) p.payments[m.k] = { paid: false, amount: p.base };
+      });
+    });
+    save(); closeConfig(); render();
+  }
+
   function render() {
+    const MONTHS = getMonths();
     const wrap = document.getElementById('table-wrap');
     const now = new Date();
     const currentMonthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+
+    // Update header subtitle
+    if (MONTHS.length) {
+      const first = MONTHS[0].l, last = MONTHS[MONTHS.length-1].l;
+      document.getElementById('header-sub').textContent =
+        `Seguimiento de aportes mensuales · ${first} – ${last} ${state.monthsConfig.year}`;
+    }
 
     // Summary
     let collected = 0, expected = 0, pendingCount = 0;
     state.people.forEach(p => {
       MONTHS.forEach(m => {
         expected += p.base;
-        if (p.payments[m.k].paid) collected += p.payments[m.k].amount;
+        if (p.payments[m.k] && p.payments[m.k].paid) collected += p.payments[m.k].amount;
         else if (m.k <= currentMonthKey) pendingCount++;
       });
     });
@@ -464,7 +587,7 @@
 
       let pTotal = 0;
       MONTHS.forEach(m => {
-        const pay = p.payments[m.k];
+        const pay = p.payments[m.k] || { paid: false, amount: p.base };
         if (pay.paid) pTotal += pay.amount;
         const cls  = pay.paid ? 'paid' : 'unpaid';
         const text = pay.paid
@@ -483,7 +606,7 @@
     h += '</tbody><tfoot><tr><td>Total por mes</td>';
     MONTHS.forEach(m => {
       let mTotal = 0;
-      state.people.forEach(p => { if (p.payments[m.k].paid) mTotal += p.payments[m.k].amount; });
+      state.people.forEach(p => { if (p.payments[m.k] && p.payments[m.k].paid) mTotal += p.payments[m.k].amount; });
       h += `<td class="${mTotal ? 'has-value' : ''}">${mTotal ? clp(mTotal) : '—'}</td>`;
     });
     h += `<td class="has-value" style="text-align:right;padding-right:18px">${clp(collected)}</td>`;
@@ -494,7 +617,7 @@
 
   document.addEventListener('keydown', e => {
     const modal = document.getElementById('modal');
-    if (e.key === 'Escape') { closeModal(); return; }
+    if (e.key === 'Escape') { closeModal(); closeConfig(); return; }
     if (e.key === 'Enter') {
       if (modal.style.display !== 'none') { confirmPay(); return; }
       const active = document.activeElement;
